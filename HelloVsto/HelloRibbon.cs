@@ -57,8 +57,8 @@ namespace HelloVsto
             {
                 addIn.LogLifecycleEvent("OnHelloButtonClick() - Button clicked!");
 
-                // Get the active worksheet
-                var worksheet = (Microsoft.Office.Interop.Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet;
+                // Get the active worksheet using the addIn reference (not Globals.ThisAddIn which may be null)
+                var worksheet = (Microsoft.Office.Interop.Excel.Worksheet)addIn.Application.ActiveSheet;
 
                 // Write to cell A1
                 var range = worksheet.Range["A1"];

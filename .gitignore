@@ -1,0 +1,37 @@
+# Visual Studio and VSTO build outputs
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+bld/
+[Oo]bj/
+
+# VSTO-specific
+*.vsto
+*.application
+publish/
+
+# Visual Studio cache/options
+.vs/
+*.vssscc
+*.vspscc
+
+# NuGet
+packages/
+*.nupkg
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Local settings
+.claude/settings.local.json

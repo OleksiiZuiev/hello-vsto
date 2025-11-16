@@ -1,20 +1,27 @@
 using System;
+using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using Office = Microsoft.Office.Core;
 
 namespace HelloVsto
 {
     public partial class ThisAddIn
     {
-        // P/Invoke declarations for console management
-        [DllImport("kernel32.dll")]
-        private static extern bool AllocConsole();
-
-        [DllImport("kernel32.dll")]
-        private static extern bool FreeConsole();
-
         private HelloRibbon ribbon;
+        private readonly string sessionId = Guid.NewGuid().ToString("N").Substring(0, 8);
+        private bool isFirstLog = true;
+
+        /// <summary>
+        /// Gets the log file path in %TEMP%\HelloVsto\HelloVsto.log
+        /// </summary>
+        private string LogFilePath
+        {
+            get
+            {
+                var logDirectory = Path.Combine(Path.GetTempPath(), "HelloVsto");
+                return Path.Combine(logDirectory, "HelloVsto.log");
+            }
+        }
 
         /// <summary>
         /// This is the FIRST method called by VSTO runtime - even before Startup event.
@@ -48,52 +55,118 @@ namespace HelloVsto
         {
             LogLifecycleEvent("ThisAddIn_Shutdown() - Add-in is unloading");
             LogLifecycleEvent("Cleaning up resources...");
-
-            // Give user a moment to see shutdown message
-            System.Threading.Thread.Sleep(500);
-
-            // Free the console before Excel closes
-            FreeConsole();
+            LogSessionEnd();
         }
 
         /// <summary>
-        /// Helper method to log lifecycle events to console.
-        /// Creates console on first call.
+        /// Logs the end of the current session.
+        /// </summary>
+        private void LogSessionEnd()
+        {
+            try
+            {
+                var sessionFooter = new System.Text.StringBuilder();
+                sessionFooter.AppendLine($"[{sessionId}] ========================================");
+                sessionFooter.AppendLine($"[{sessionId}] SESSION END: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                sessionFooter.AppendLine($"[{sessionId}] ========================================");
+
+                File.AppendAllText(LogFilePath, sessionFooter.ToString());
+                Debug.Write(sessionFooter.ToString());
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to log session end: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Helper method to log lifecycle events to file.
+        /// Appends timestamped entries to log file.
         /// </summary>
         public void LogLifecycleEvent(string message)
         {
             try
             {
-                // Create console on first log call
-                if (!IsConsoleAllocated)
+                // Ensure log directory exists
+                var logDirectory = Path.GetDirectoryName(LogFilePath);
+                if (!Directory.Exists(logDirectory))
                 {
-                    AllocConsole();
-
-                    // Reinitialize console streams for proper output
-                    Console.SetOut(new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true });
-                    Console.SetError(new StreamWriter(Console.OpenStandardError()) { AutoFlush = true });
-
-                    IsConsoleAllocated = true;
-
-                    // Write header
-                    Console.WriteLine("=====================================");
-                    Console.WriteLine("   HELLO VSTO - LIFECYCLE LOGGER");
-                    Console.WriteLine("=====================================");
-                    Console.WriteLine();
+                    Directory.CreateDirectory(logDirectory);
                 }
 
-                // Write timestamped message
+                // Write session header on first log entry
+                if (isFirstLog)
+                {
+                    var sessionHeader = new System.Text.StringBuilder();
+                    sessionHeader.AppendLine();
+                    sessionHeader.AppendLine("========================================");
+                    sessionHeader.AppendLine($"SESSION START: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                    sessionHeader.AppendLine($"Session ID: {sessionId}");
+                    sessionHeader.AppendLine("========================================");
+
+                    File.AppendAllText(LogFilePath, sessionHeader.ToString());
+                    Debug.Write(sessionHeader.ToString());
+
+                    isFirstLog = false;
+                }
+
+                // Write timestamped message to file
                 string timestamp = DateTime.Now.ToString("HH:mm:ss.fff");
-                Console.WriteLine($"[{timestamp}] {message}");
+                string logEntry = $"[{sessionId}] [{timestamp}] {message}";
+
+                File.AppendAllText(LogFilePath, logEntry + Environment.NewLine);
+
+                // Also write to Debug output for Visual Studio debugging
+                Debug.WriteLine(logEntry);
             }
             catch (Exception ex)
             {
-                // If console logging fails, fail silently (don't crash the add-in)
-                System.Diagnostics.Debug.WriteLine($"Console logging failed: {ex.Message}");
+                // If file logging fails, only write to Debug output (don't crash the add-in)
+                Debug.WriteLine($"File logging failed: {ex.Message}");
             }
         }
 
-        private bool IsConsoleAllocated { get; set; } = false;
+        /// <summary>
+        /// Gets the full path to the log file.
+        /// </summary>
+        public string GetLogFilePath()
+        {
+            return LogFilePath;
+        }
+
+        /// <summary>
+        /// Opens the log file in the default text editor.
+        /// </summary>
+        public void OpenLogFile()
+        {
+            try
+            {
+                if (File.Exists(LogFilePath))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = LogFilePath,
+                        UseShellExecute = true
+                    });
+                }
+                else
+                {
+                    System.Windows.Forms.MessageBox.Show(
+                        $"Log file does not exist yet.\n\nLog file will be created at:\n{LogFilePath}",
+                        "Hello VSTO - Log File",
+                        System.Windows.Forms.MessageBoxButtons.OK,
+                        System.Windows.Forms.MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.Forms.MessageBox.Show(
+                    $"Failed to open log file:\n{ex.Message}",
+                    "Hello VSTO - Error",
+                    System.Windows.Forms.MessageBoxButtons.OK,
+                    System.Windows.Forms.MessageBoxIcon.Error);
+            }
+        }
 
         #region VSTO generated code
 

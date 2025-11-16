@@ -77,12 +77,34 @@ namespace HelloVsto
             }
         }
 
+        /// <summary>
+        /// Called when the "View Logs" button is clicked.
+        /// Opens the log file in the default text editor.
+        /// </summary>
+        public void OnViewLogsButtonClick(Office.IRibbonControl control)
+        {
+            try
+            {
+                addIn.LogLifecycleEvent("OnViewLogsButtonClick() - Opening log file...");
+                addIn.OpenLogFile();
+            }
+            catch (Exception ex)
+            {
+                addIn.LogLifecycleEvent($"ERROR in OnViewLogsButtonClick: {ex.Message}");
+                System.Windows.Forms.MessageBox.Show(
+                    $"Error opening log file: {ex.Message}",
+                    "Hello VSTO Error",
+                    System.Windows.Forms.MessageBoxButtons.OK,
+                    System.Windows.Forms.MessageBoxIcon.Error);
+            }
+        }
+
         #endregion
 
         #region Ribbon XML Generation
 
         /// <summary>
-        /// Generates the ribbon XML that defines our custom tab and button.
+        /// Generates the ribbon XML that defines our custom tab and buttons.
         /// This is the code-based approach (alternative to using Ribbon Designer).
         /// </summary>
         private string GetRibbonXml()
@@ -99,6 +121,12 @@ namespace HelloVsto
                             size='large'
                             onAction='OnHelloButtonClick'
                             imageMso='HappyFace' />
+                          <button
+                            id='ViewLogsButton'
+                            label='View Logs'
+                            size='large'
+                            onAction='OnViewLogsButtonClick'
+                            imageMso='FileOpen' />
                         </group>
                       </tab>
                     </tabs>

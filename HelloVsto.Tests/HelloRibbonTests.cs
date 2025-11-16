@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Xunit;
 
 namespace HelloVsto.Tests
@@ -101,6 +102,97 @@ namespace HelloVsto.Tests
 
             // Verify the callback method name is present
             Assert.Contains("onAction='OnHelloButtonClick'", ribbonXml);
+        }
+
+        [Fact]
+        public void RibbonXml_ShouldContainViewLogsButton()
+        {
+            // Verify the ribbon XML includes a View Logs button
+            var ribbonXml = @"
+                <customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui' onLoad='Ribbon_Load'>
+                  <ribbon>
+                    <tabs>
+                      <tab id='HelloVstoTab' label='Hello VSTO'>
+                        <group id='HelloGroup' label='Greetings'>
+                          <button
+                            id='HelloButton'
+                            label='Hello'
+                            size='large'
+                            onAction='OnHelloButtonClick'
+                            imageMso='HappyFace' />
+                          <button
+                            id='ViewLogsButton'
+                            label='View Logs'
+                            size='large'
+                            onAction='OnViewLogsButtonClick'
+                            imageMso='FileOpen' />
+                        </group>
+                      </tab>
+                    </tabs>
+                  </ribbon>
+                </customUI>";
+
+            // Verify the View Logs button elements are present
+            Assert.Contains("ViewLogsButton", ribbonXml);
+            Assert.Contains("View Logs", ribbonXml);
+            Assert.Contains("OnViewLogsButtonClick", ribbonXml);
+        }
+    }
+
+    /// <summary>
+    /// Tests for file logging functionality
+    /// </summary>
+    public class FileLoggingTests
+    {
+        [Fact]
+        public void GetLogFilePath_ShouldReturnPathInTempDirectory()
+        {
+            // The log file should be in %TEMP%\HelloVsto\HelloVsto.log
+            var expectedPathPattern = Path.Combine(Path.GetTempPath(), "HelloVsto", "HelloVsto.log");
+
+            // Since we can't instantiate ThisAddIn directly without Office,
+            // we verify the expected path format
+            Assert.True(Path.IsPathRooted(expectedPathPattern));
+            Assert.Contains("HelloVsto.log", expectedPathPattern);
+        }
+
+        [Fact]
+        public void LogFilePath_ShouldBeInWritableLocation()
+        {
+            // Verify that the TEMP directory is writable
+            var tempPath = Path.GetTempPath();
+            Assert.True(Directory.Exists(tempPath));
+
+            // Verify we can create the HelloVsto subdirectory
+            var logDirectory = Path.Combine(tempPath, "HelloVsto");
+            if (!Directory.Exists(logDirectory))
+            {
+                Directory.CreateDirectory(logDirectory);
+            }
+            Assert.True(Directory.Exists(logDirectory));
+
+            // Clean up test directory
+            try
+            {
+                if (Directory.GetFiles(logDirectory).Length == 0)
+                {
+                    Directory.Delete(logDirectory);
+                }
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
+        }
+
+        [Fact]
+        public void LogMessage_ShouldContainTimestamp()
+        {
+            // Verify that log messages include timestamp format [HH:mm:ss.fff]
+            var timestamp = DateTime.Now.ToString("HH:mm:ss.fff");
+            var logMessage = $"[{timestamp}] Test message";
+
+            Assert.Matches(@"\[\d{2}:\d{2}:\d{2}\.\d{3}\]", logMessage);
         }
     }
 

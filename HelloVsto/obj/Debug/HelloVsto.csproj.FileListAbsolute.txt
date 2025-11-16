@@ -1,0 +1,1 @@
+C:\work\github\OleksiiZuiev\hello-vsto\HelloVsto\obj\Debug\HelloVsto.csproj.AssemblyReference.cache

@@ -111,6 +111,9 @@
     <Compile Include="ThisAddIn.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ThisAddIn.Designer.cs">
+      <DependentUpon>ThisAddIn.cs</DependentUpon>
+    </Compile>
     <Compile Include="HelloRibbon.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -124,10 +127,7 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>HelloVsto_TemporaryKey.pfx</ManifestKeyFile>
-  </PropertyGroup>
-  <PropertyGroup>
-    <ManifestCertificateThumbprint>0000000000000000000000000000000000000000</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>6E2D3068335DA6508A099D0A08BF45BF06821D7B</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>false</SignAssembly>
